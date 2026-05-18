@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mapa de la Vida y Viajes de Pablo el Apóstol</title>
+
+
+
+<style>
+/* PALETA DE COLORES Y VARIABLES PROPIAS */
+:root {
+  --bg-main: #f8fafc;
+  --bg-card: #ffffff;
+  --border-color: #e2e8f0;
+  --text-main: #0f172a;
+  --text-muted: #475569;
+  --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+  --radius: 12px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-main: #0f172a;
+    --bg-card: #1e293b;
+    --border-color: #334155;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.3);
+  }
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { 
+  font-family: var(--font-family); 
+  background-color: var(--bg-main); 
+  color: var(--text-main);
+  padding: 20px;
+  display: flex;
+  flex-direction: column; /* Esto fuerza a que el título vaya arriba y el mapa abajo */
+  align-items: center;    /* Esto centra todo el contenido en la pantalla */
+}
+
+.container { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 16px; 
+  width: 100%;
+  max-width: 950px; 
+}
+
+/* PESTAÑAS / FILTROS */
+.tabs { 
+  display: flex; 
+  gap: 8px; 
+  flex-wrap: wrap; 
+  padding: 4px 0; 
+}
+.tab { 
+  padding: 8px 16px; 
+  border-radius: 20px; 
+  border: 1px solid var(--border-color); 
+  font-size: 13px; 
+  cursor: pointer; 
+  background: var(--bg-card); 
+  color: var(--text-muted); 
+  transition: all 0.25s ease; 
+  white-space: nowrap;
+  font-weight: 500;
+}
+.tab.active { 
+  background: #3b82f6; 
+  color: #ffffff; 
+  border-color: transparent; 
+  box-shadow: 0 2px 4px rgb(59 130 246 / 0.3);
+}
+.tab:hover:not(.active) { 
+  background: var(--border-color);
+  color: var(--text-main);
+}
+
+/* ÁREA DEL MAPA REAL */
+.map-area { 
+  position: relative; 
+  width: 100%; 
+  border-radius: var(--radius); 
+  overflow: hidden; 
+  border: 1px solid var(--border-color); 
+  box-shadow: var(--shadow);
+  cursor: grab;
+}
+.map-area:active { cursor: grabbing; }
+.map-svg { width: 100%; display: block; height: 530px; }
+
+/* CONTROLES INTERACTIVOS DE ZOOM */
+.zoom-controls {
+  position: absolute;
+  bottom: 15px;
+  right: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 10;
+}
+.zoom-btn {
+  width: 36px;
+  height: 36px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-main);
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow);
+  transition: background 0.2s;
+}
+.zoom-btn:hover { background: var(--border-color); }
+
+/* ANIMACIÓN DE RUTAS MISIONERAS */
+.route-path {
+  fill: none;
+  stroke-dasharray: 6 6;
+  animation: dash 60s linear infinite;
+  transition: opacity 0.4s ease;
+}
+@keyframes dash { to { stroke-dashoffset: -1000; } }
+
+.city-group { transition: opacity 0.3s ease; }
+.city-circle { transition: fill 0.2s ease, stroke-width 0.2s ease; }
+
+/* LEYENDA */
+.legend { 
+  display: flex; 
+  gap: 16px; 
+  flex-wrap: wrap; 
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  border: 1px solid var(--border-color);
+  padding: 12px;
+}
+.leg-item { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-muted); font-weight: 500; }
+.leg-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; border: 1.5px solid var(--bg-card); }
+
+/* PANEL DE INFORMACIÓN HISTÓRICA */
+.info-panel { 
+  background: var(--bg-card); 
+  border: 1px solid var(--border-color); 
+  border-radius: var(--radius); 
+  padding: 20px; 
+  min-height: 130px; 
+  box-shadow: var(--shadow);
+  transition: all 0.3s ease;
+}
+.info-panel h3 { font-size: 18px; font-weight: 600; color: var(--text-main); margin-bottom: 8px; }
+.info-panel p { font-size: 14px; color: var(--text-muted); line-height: 1.6; }
+.info-panel .tags { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.tag { font-size: 12px; padding: 4px 10px; border-radius: 6px; font-weight: 500; box-shadow: 0 1px 2px rgb(0 0 0 / 0.05); }
+.tag-blue { background: #e0f2fe; color: #0369a1; }
+.tag-amber { background: #fef3c7; color: #b45309; }
+.tag-teal { background: #ccfbf1; color: #0f766e; }
+.tag-coral { background: #fee2e2; color: #b91c1c; }
+.tag-purple { background: #f3e8ff; color: #6b21a8; }
+.tag-green { background: #dcfce7; color: #15803d; }
+
+@media (prefers-color-scheme: dark) {
+  .tag-blue { background: #0369a133; color: #7dd3fc; }
+  .tag-amber { background: #b4530933; color: #fcd34d; }
+  .tag-teal { background: #0f766e33; color: #2dd4bf; }
+  .tag-coral { background: #b91c1c33; color: #fca5a5; }
+  .tag-purple { background: #6b21a833; color: #d8b4fe; }
+  .tag-green { background: #15803d33; color: #86efac; }
+}
+
+/* ESTILOS PARA EL NUEVO TÍTULO PRINCIPAL */
+.main-project-title {
+  text-align: center;
+  font-family: var(--font-family);
+  color: var(--text-main);
+  margin: 24px auto 12px auto;
+  padding-bottom: 12px;
+  max-width: 800px;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.main-project-title h1 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  margin: 0 0 4px 0;
+}
+
+.main-project-title p {
+  font-size: 1rem;
+  color: var(--text-muted);
+  margin: 0;
+  font-weight: 400;
+}
+
+@media (max-width: 768px) {
+  .main-project-title h1 {
+    font-size: 1.4rem;
+    padding: 0 16px;
+  }
+  .main-project-title p {
+    font-size: 0.9rem;
+  }
+}
+
+/* ESTILOS PARA EL TÍTULO PRINCIPAL */
+.main-project-title {
+  text-align: center;
+  margin-bottom: 24px;
+  width: 100%;
+  max-width: 950px; /* Se alinea perfectamente con el ancho de tu contenedor */
+}
+
+.main-project-title h1 {
+  font-size: 2.2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-main);
+  margin-bottom: 6px;
+}
+
+.main-project-title p {
+  font-size: 1.1rem;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+@media (max-width: 768px) {
+  .main-project-title h1 { font-size: 1.6rem; }
+  .main-project-title p { font-size: 0.95rem; }
+}
+
+</style>
+<script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
+</head>
+<body>
+  <div class="main-project-title">
+  <h1>Mapa de la vida y viajes de Pablo el apóstol</h1>
+  <p>Un recorrido por la historia de los viajes misioneros del Apóstol Pablo</p>
+</div>
+
+<div class="container">
+  <div class="tabs" id="tabs">
+    <button class="tab active" onclick="setFilter('all')">Vida</button>
+    <button class="tab" onclick="setFilter('early')">Inicios</button>
+    <button class="tab" onclick="setFilter('v1')">1° Viaje misionero</button>
+    <button class="tab" onclick="setFilter('v2')">2° Viaje misionero</button>
+    <button class="tab" onclick="setFilter('v3')">3° Viaje misionero</button>
+    <button class="tab" onclick="setFilter('prison')">Prisión y martirio</button>
+    <button class="tab" onclick="setFilter('epistles')">Epístolas escritas</button>
+  </div>
+
+  <div class="map-area">
+    <div class="zoom-controls">
+      <button class="zoom-btn" id="zoom-in">+</button>
+      <button class="zoom-btn" id="zoom-out">−</button>
+      <button class="zoom-btn" id="zoom-reset">⟲</button>
+    </div>
+
+    <svg class="map-svg" viewBox="0 0 945 582" id="mapsvg">
+      <g id="viewport-group">
+        
+        <image href="Mapa.jpg" x="0" y="0" width="945" height="582" />
+
+        <g id="routes">
+          <polyline id="r-early" class="route-path" stroke="#7F77DD" stroke-width="2.5" opacity="0"/>
+          <polyline id="r-v1" class="route-path" stroke="#1D9E75" stroke-width="3" opacity="0"/>
+          <polyline id="r-v2" class="route-path" stroke="#378ADD" stroke-width="3" opacity="0"/>
+          <polyline id="r-v3" class="route-path" stroke="#D85A30" stroke-width="3" opacity="0"/>
+          <polyline id="r-prison" class="route-path" stroke="#D4537E" stroke-width="3" opacity="0"/>
+        </g>
+
+        <g id="cities"></g>
+      </g>
+    </svg>
+  </div>
+
+  <div class="legend">
+    <div class="leg-item"><div class="leg-dot" style="background:#7F77DD"></div> Inicios</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#1D9E75"></div> 1er viaje</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#378ADD"></div> 2do viaje</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#D85A30"></div> 3er viaje</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#D4537E"></div> Prisión y martirio</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#BA7517"></div> Epístola escrita aquí</div>
+  </div>
+
+  <div class="info-panel" id="info-panel">
+    <h3 id="info-title">Selecciona una ciudad en el mapa</h3>
+    <p id="info-body">Haz clic en cualquier punto interactivo del mapa para mostrar los acontecimientos históricos del apóstol Pablo en esa ubicación.</p>
+    <div class="tags" id="info-tags"></div>
+  </div>
+</div>
+
+<script>
+// TU BASE DE DATOS DE COORDENADAS (Modifica los valores x e y aquí y todo lo demás se alineará solo)
+const cityData = [
+  { id:'tarso', name:'Tarso', x:766, y:349, fontSize: 18, phases:['early','v2','v3'], desc:'Ciudad natal de Pablo (Saulo de Tarso). Aquí nació entre el año 5–10 d.C., criado como judío fariseo con ciudadanía romana. Volvió tras su conversión (Gál 1:21).', tags:[{t:'Nacimiento ~5 d.C.',c:'purple'},{t:'Ciudad romana',c:'blue'}], epistles:[] },
+  { id:'jerusalem', name:'Jerusalén', x:775, y:505, fontSize: 18, phases:['v3','early','prison'], desc:'Aquí estudió a los pies de Gamaliel, persiguió a los cristianos y fue testigo del martirio de Esteban. Regresó tras su conversión para ver a Pedro. Fue arrestado en su tercer viaje.', tags:[{t:'Estudió con Gamaliel',c:'purple'},{t:'Arresto final',c:'coral'}], epistles:[] },
+  { id:'damasco', name:'Damasco', x:804, y:452, fontSize: 18, phases:['early'], desc:'Camino a Damasco ocurrió la conversión de Pablo (~33 d.C.): "una luz del cielo le rodeó" (Hch 9:3). Fue bautizado por Ananías y comenzó a predicar en las sinagogas.', tags:[{t:'Conversión ~33 d.C.',c:'purple'},{t:'Bautismo',c:'teal'}], epistles:[] },
+  { id:'antioquia', name:'Antioquía', x:800, y:371, fontSize: 18, phases:['early','v1','v2','v3'], desc:'Base misionera de Pablo. Aquí los discípulos fueron llamados "cristianos" por primera vez. Desde aquí partieron los tres viajes misioneros.', tags:[{t:'Base misionera',c:'blue'},{t:'Primer viaje: ~46 d.C.',c:'green'}], epistles:[] },
+  { id:'chipre', name:'Chipre', x:734, y:403, fontSize: 18, phases:['v1', 'prison'], desc:'Primera parada del primer viaje misionero (~46-47 d.C.). Pablo y Bernabé predicaron en Salamina y Pafos, donde el procónsul Sergio Paulo creyó (Hch 13).', tags:[{t:'1er viaje ~46 d.C.',c:'green'},{t:'Primer milagro',c:'teal'}], epistles:[] },
+  { id:'iconio', name:'Iconio', x:710, y:319, fontSize: 18, phases:['v1','v2','v3'], desc:'Visitada en los tres viajes. Muchos creyeron, pero también hubo persecución. La región de Galacia fue receptora de la epístola a los Gálatas.', tags:[{t:'Tres visitas',c:'blue'},{t:'Destino de Gálatas',c:'amber'}], epistles:[{name:'Gálatas',c:'amber'}] },
+  { id:'listra', name:'Listra', x:722, y:343, fontSize: 18, phases:['v1','v2'], desc:'En Listra Pablo sanó a un cojo y fue confundido con un dios. También fue apedreado. Aquí conoció a Timoteo, quien se convirtió en su compañero de misión.', tags:[{t:'Conoce a Timoteo',c:'teal'},{t:'Apedreado',c:'coral'}], epistles:[] },
+  { id:'troas', name:'Troas', x:556, y:262, fontSize: 18, phases:['v2','v3'], desc:'Aquí Pablo tuvo la visión del "varón macedonio" (Hch 16:9), que lo llevó a Europa. En su último paso resucitó a Eutico que cayó de una ventana.', tags:[{t:'Visión de Macedonia',c:'purple'},{t:'2do y 3er viaje',c:'blue'}], epistles:[] },
+  { id:'filipos', name:'Filipos', x:512, y:220, fontSize: 18, phases:['v2','v3'], desc:'Primera comunidad cristiana en Europa (~49 d.C.). Pablo y Silas fueron encarcelados y liberados milagrosamente. La iglesia de Filipos fue muy querida por Pablo.', tags:[{t:'Primera iglesia en Europa',c:'blue'},{t:'Encarcelamiento',c:'coral'}], epistles:[{name:'Filipenses',c:'amber'}] },
+  { id:'tesalonica', name:'Tesalónica', x:476, y:235, fontSize: 18, phases:['v3','v2'], desc:'Pablo predicó tres sábados en la sinagoga. Fue expulsado por disturbios. A esta iglesia escribió las epístolas más antiguas del NT (1 y 2 Tesalonicenses, ~50 d.C.).', tags:[{t:'~50 d.C.',c:'blue'},{t:'Epístolas más antiguas',c:'amber'}], epistles:[{name:'1 Tesalonicenses',c:'amber'},{name:'2 Tesalonicenses',c:'amber'}] },
+  { id:'atenas', name:'Atenas', x:495, y:317, fontSize: 18, phases:['v2'], desc:'Pablo predicó en el Areópago ante filósofos estoicos y epicúreos (Hch 17). Su discurso sobre "el Dios no conocido" es uno de los más famosos del NT.', tags:[{t:'Discurso del Areópago',c:'purple'},{t:'2do viaje ~50 d.C.',c:'blue'}], epistles:[] },
+  { id:'corinto', name:'Corinto', x:474, y:319, fontSize: 18, phases:['v2','v3'], desc:'Pablo vivió y trabajó aquí 18 meses (~50-52 d.C.), fabricando tiendas con Áquila y Priscila. Escribió las cartas a los Romanos y Corintios desde este punto.', tags:[{t:'18 meses de ministerio',c:'teal'},{t:'Centro estratégico',c:'amber'}], epistles:[{name:'1 Corintios',c:'amber'},{name:'2 Corintios',c:'amber'},{name:'Romanos',c:'amber'}] },
+  { id:'efeso', name:'Éfeso', x:585, y:321, fontSize: 18, phases:['v2','v3'], desc:'Pablo ministró aquí por ~3 años durante el 3er viaje (54-57 d.C.). Fue el ministerio más largo. Se produjo un gran avivamiento y disturbios por los fabricantes de ídolos.', tags:[{t:'3 años de ministerio',c:'teal'},{t:'Gran avivamiento',c:'green'}], epistles:[{name:'Efesios',c:'amber'},{name:'1 Corintios',c:'amber'}] },
+  { id:'roma', name:'Roma', x:224, y:194, fontSize: 18, phases:['prison','v3'], desc:'Pablo llegó como prisionero (~60 d.C.). Estuvo en arresto domiciliario 2 años, predicando libremente. Según la tradición, fue martirizado bajo el emperador Nerón (~67 d.C.).', tags:[{t:'Prisionero ~60-62 d.C.',c:'coral'},{t:'Martirio ~67 d.C.',c:'coral'}], epistles:[{name:'Efesios',c:'amber'},{name:'Filipenses',c:'amber'},{name:'Colosenses',c:'amber'},{name:'Filemón',c:'amber'}] },
+  { id:'cesarea', name:'Cesarea', x:771, y:483, fontSize: 18, phases:['v3','prison'], desc:'Pablo estuvo preso aquí 2 años (~58-60 d.C.) ante los gobernadores Félix y Festo. Apeló al César, lo que inició su viaje definitivo a Roma.', tags:[{t:'Preso 2 años',c:'coral'},{t:'Apelación al César',c:'blue'}], epistles:[] },
+  { id:'malta', name:'Malta', x:265, y:383, fontSize: 18, phases:['prison'], desc:'El barco naufragó camino a Roma (~60 d.C.). Pablo sobrevivió milagrosamente una mordedura de víbora y sanó al padre de Publio. Pasaron el invierno aquí.', tags:[{t:'Naufragio',c:'coral'},{t:'Milagros',c:'teal'}], epistles:[] },
+  { id:'colosas', name:'Colosas', x:630, y:323, fontSize: 18, phases:['v1','v3'], desc:'Pablo no fundó esta iglesia en persona, pero le escribió desde la prisión en Roma para advertirles contra falsas filosofías que desvirtuaban el Evangelio.', tags:[{t:'Epístola desde prisión',c:'purple'},{t:'Iglesia de Asia Menor',c:'amber'}], epistles:[{name:'Colosenses',c:'amber'}] },
+];
+
+// ESTRUCTURA INTELIGENTE DE LAS RUTAS (Conecta las ciudades por sus IDs unívocos)
+const routeConnections = {
+  'early': ['tarso', 'jerusalem', 'damasco', 'antioquia'],
+  'v1': ['antioquia', 'chipre', 'colosas', 'iconio', 'listra', 'antioquia'],
+  'v2': ['antioquia', 'tarso', 'iconio', 'listra', 'troas', 'filipos', 'tesalonica', 'atenas', 'corinto', 'efeso', 'antioquia'],
+  'v3': ['antioquia', 'tarso', 'iconio', 'efeso', 'troas', 'filipos', 'tesalonica', 'corinto', 'troas', 'efeso', 'cesarea', 'jerusalem'],
+  'prison': ['jerusalem', 'cesarea', 'chipre', 'malta', 'roma']
+};
+
+let activeFilter = 'all';
+let activeCity = null;
+let panZoomMap; 
+let currentZoom = 1;
+
+const phaseColors = { early:'#7F77DD', v1:'#1D9E75', v2:'#378ADD', v3:'#D85A30', prison:'#D4537E', epistles:'#BA7517' };
+
+function getColor(city) {
+  if(activeFilter === 'epistles') return city.epistles.length > 0 ? '#BA7517' : '#64748b';
+  if(activeFilter === 'all') return phaseColors[city.phases[0]] || '#64748b';
+  return city.phases.includes(activeFilter) ? phaseColors[activeFilter] : '#cbd5e1';
+}
+
+function getOpacity(city) {
+  if(activeFilter === 'all') return 1;
+  if(activeFilter === 'epistles') return city.epistles.length > 0 ? 1 : 0.2;
+  return city.phases.includes(activeFilter) ? 1 : 0.15;
+}
+
+function renderCities() {
+  const g = document.getElementById('cities');
+  g.innerHTML = '';
+  
+  cityData.forEach(city => {
+    const op = getOpacity(city);
+    const col = getColor(city);
+    
+    const grp = document.createElementNS('http://www.w3.org/2000/svg','g');
+    grp.setAttribute('id', 'grp-' + city.id);
+    grp.setAttribute('class', 'city-group');
+    grp.setAttribute('cursor','pointer');
+    grp.setAttribute('opacity', op);
+
+    const circle = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    circle.setAttribute('class', 'city-circle');
+    circle.setAttribute('cx', city.x); 
+    circle.setAttribute('cy', city.y);
+    circle.setAttribute('fill', col);
+    circle.setAttribute('stroke', 'var(--bg-card)'); 
+
+    const label = document.createElementNS('http://www.w3.org/2000/svg','text');
+    label.setAttribute('fill','#000000'); 
+    label.setAttribute('font-family','var(--font-family)');
+    label.setAttribute('stroke', '#ffffff');
+    label.setAttribute('paint-order', 'stroke');
+    label.textContent = city.name;
+
+    grp.appendChild(circle); 
+    grp.appendChild(label);
+    
+    grp.addEventListener('click', (e) => {
+      e.stopPropagation(); 
+      selectCity(city.id);
+    });
+    
+    g.appendChild(grp);
+  });
+
+  adjustElements();
+}
+
+function adjustElements() {
+  const zoom = currentZoom || 1;
+  
+  cityData.forEach(city => {
+    const grp = document.getElementById('grp-' + city.id);
+    if (!grp) return;
+    
+    const circle = grp.querySelector('.city-circle');
+    const label = grp.querySelector('text');
+    const isActive = activeCity === city.id;
+    
+    const baseRadius = isActive ? 9 : 6;
+    const baseStroke = isActive ? 2.5 : 1.5;
+    let customSize = city.fontSize || 11;
+    const baseFontSize = isActive ? customSize + 2 : customSize;
+    const baseFontWeight = isActive ? '700' : '600';
+    
+    if (circle) {
+      circle.setAttribute('r', baseRadius / zoom);
+      circle.setAttribute('stroke-width', baseStroke / zoom);
+    }
+    
+    if (label) {
+      label.setAttribute('font-size', baseFontSize / zoom);
+      label.setAttribute('stroke-width', 0.5 / zoom);
+      label.setAttribute('font-weight', baseFontWeight);
+      
+      let offsetX = 10 / zoom;
+      let offsetY = 4 / zoom;
+      let textAnchor = 'start';
+      
+      if (city.id === 'corinto' || city.id === 'tesalonica' || city.id === 'jerusalem') {
+        offsetX = -10 / zoom;
+        textAnchor = 'end';
+      }
+      if (city.id === 'atenas' || city.id === 'listra') {
+        offsetY = 14 / zoom;
+        offsetX = 0;
+        textAnchor = 'middle';
+      }
+      
+      label.setAttribute('x', city.x + offsetX);
+      label.setAttribute('y', city.y + offsetY);
+      label.setAttribute('text-anchor', textAnchor);
+    }
+  });
+  
+  ['early','v1','v2','v3','prison'].forEach(id => {
+    const el = document.getElementById('r-'+id);
+    if(!el) return;
+    if (activeFilter === 'all' || activeFilter === id) {
+      const baseWidth = activeFilter === id ? 3.5 : 2;
+      el.style.strokeWidth = (baseWidth / zoom);
+    } else {
+      el.style.strokeWidth = (1.5 / zoom);
+    }
+  });
+}
+
+// NUEVO: Esta función calcula las líneas automáticamente leyendo tu "cityData" al instante
+function updateRoutes() {
+  ['early','v1','v2','v3','prison'].forEach(id => {
+    const el = document.getElementById('r-'+id);
+    if(!el) return;
+    
+    // Vinculación dinámica automática
+    const connections = routeConnections[id];
+    if (connections) {
+      const pointsStr = connections.map(cityId => {
+        const city = cityData.find(c => c.id === cityId);
+        return city ? `${city.x},${city.y}` : '';
+      }).filter(p => p !== '').join(' ');
+      el.setAttribute('points', pointsStr);
+    }
+
+    if (activeFilter === 'all' || activeFilter === id) {
+      el.style.opacity = '0.85';
+    } else if(activeFilter === 'epistles') {
+      el.style.opacity = '0.2';
+    } else {
+      el.style.opacity = '0';
+    }
+  });
+  adjustElements();
+}
+
+function selectCity(id) {
+  activeCity = id;
+  const city = cityData.find(c => c.id === id);
+  
+  const panel = document.getElementById('info-panel');
+  panel.style.transform = 'translateY(-2px)';
+  setTimeout(() => panel.style.transform = 'translateY(0)', 150);
+
+  document.getElementById('info-title').textContent = city.name;
+  document.getElementById('info-body').textContent = city.desc;
+  
+  const tagsEl = document.getElementById('info-tags');
+  tagsEl.innerHTML = '';
+  
+  city.tags.forEach(t => {
+    const span = document.createElement('span');
+    span.className = 'tag tag-'+t.c;
+    span.textContent = t.t;
+    tagsEl.appendChild(span);
+  });
+  
+  if(city.epistles.length) {
+    const sp = document.createElement('span');
+    sp.className = 'tag tag-amber';
+    sp.innerHTML = '📜 <strong>Epístolas:</strong> ' + city.epistles.map(e=>e.name).join(', ');
+    tagsEl.appendChild(sp);
+  }
+  
+  renderCities();
+}
+
+function setFilter(f) {
+  activeFilter = f;
+  activeCity = null;
+  
+  const filters = ['all','early','v1','v2','v3','prison','epistles'];
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    t.classList.toggle('active', filters[i] === f);
+  });
+  
+  document.getElementById('info-title').textContent = 'Selecciona una ciudad en el mapa';
+  document.getElementById('info-body').textContent = 'Haz clic en cualquier punto interactivo del mapa para mostrar los acontecimientos históricos del apóstol Pablo en esa ubicación.';
+  document.getElementById('info-tags').innerHTML = '';
+  
+  updateRoutes();
+  renderCities();
+}
+
+window.onload = function() {
+  updateRoutes();
+  renderCities();
+
+  panZoomMap = svgPanZoom('#mapsvg', {
+    viewportSelector: '#viewport-group',
+    panEnabled: true,
+    controlIconsEnabled: false, 
+    zoomEnabled: true,
+    dblClickZoomEnabled: true,
+    mouseWheelZoomEnabled: true,
+    preventMouseEventsDefault: true,
+    zoomScaleSensitivity: 0.25,
+    minZoom: 1,
+    maxZoom: 8,
+    fit: true,
+    contain: true,
+    center: true,
+    onZoom: function(newZoom) {
+      currentZoom = newZoom;
+      adjustElements();     
+    }
+  });
+
+  document.getElementById('zoom-in').addEventListener('click', function(e){
+    e.preventDefault();
+    panZoomMap.zoomIn();
+  });
+  document.getElementById('zoom-out').addEventListener('click', function(e){
+    e.preventDefault();
+    panZoomMap.zoomOut();
+  });
+  document.getElementById('zoom-reset').addEventListener('click', function(e){
+    e.preventDefault();
+    panZoomMap.resetZoom();
+    panZoomMap.resetPan();
+  });
+};
+</script>
+
+</body>
+</html>
