@@ -8,6 +8,70 @@
 
 
 <style>
+
+/* ESTILOS PARA EL NUEVO ENCABEZADO ACADÉMICO COMPLETO */
+.main-project-title {
+  text-align: center;
+  margin-top: 10px;
+  margin-bottom: 30px;
+  width: 100%;
+  max-width: 950px;
+  padding: 15px;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.seminar-header {
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.course-header {
+  font-size: 1.15rem;
+  color: #3b82f6; /* Azul académico */
+  font-weight: 600;
+  margin-bottom: 14px;
+}
+
+.main-project-title h1 {
+  font-size: 2.1rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  color: var(--text-main);
+  margin-bottom: 16px;
+  line-height: 1.2;
+}
+
+/* Contenedor para los datos de presentación */
+.meta-container {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.meta-item {
+  font-size: 0.95rem;
+  color: var(--text-main);
+  background: var(--bg-main);
+  padding: 6px 16px;
+  border-radius: 20px;
+  border: 1px dashed var(--border-color);
+  font-weight: 400;
+}
+
+/* Ajustes para celulares */
+@media (max-width: 768px) {
+  .main-project-title h1 { font-size: 1.5rem; }
+  .seminar-header { font-size: 0.85rem; }
+  .course-header { font-size: 0.95rem; }
+  .meta-container { flex-direction: column; gap: 8px; align-items: center; }
+  .meta-item { width: 100%; max-width: 320px; text-align: center; }
+}
+
 /* PALETA DE COLORES Y VARIABLES PROPIAS */
 :root {
   --bg-main: #f8fafc;
@@ -220,11 +284,14 @@ body {
 }
 
 .main-project-title h1 {
-  font-size: 2.2rem;
+  font-family: "Georgia", Cambria, "Times New Roman", Times, serif;
+  font-size: 2.0rem;
   font-weight: 700;
-  letter-spacing: -0.02em;
-  color: var(--text-main);
-  margin-bottom: 6px;
+  letter-spacing: -0.01em;
+  color: var(--text-main); /* Mantiene el color automático según el modo claro/oscuro */
+  margin-bottom: 16px;
+  line-height: 1.25;
+  font-style: normal;
 }
 
 .main-project-title p {
@@ -242,9 +309,15 @@ body {
 <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
 </head>
 <body>
-  <div class="main-project-title">
-  <h1>Mapa de la vida y viajes de Pablo el apóstol</h1>
-  <p>Un recorrido por la historia de los viajes misioneros del Apóstol Pablo</p>
+<div class="main-project-title">
+  <div class="seminar-header">Seminario Bíblico Asambleas de Dios</div>
+  <div class="course-header">Nuevo Testamento III — Epístolas Paulinas</div>
+  
+  <div class="meta-container">
+    <div class="meta-item"><strong>Pastora:</strong> Isabel Cornejo</div>
+    <div class="meta-item"><strong>Presentado por:</strong> Sebastian Cruz Piraneque</div>
+  </div>
+  <h1>Inicios y viajes misioneros del Apóstol Pablo</h1>
 </div>
 
 <div class="container">
