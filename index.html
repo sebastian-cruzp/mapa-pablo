@@ -453,10 +453,17 @@ function renderCities() {
     grp.appendChild(circle); 
     grp.appendChild(label);
     
-    grp.addEventListener('click', (e) => {
-      e.stopPropagation(); 
-      selectCity(city.id);
-    });
+    // 👇 REEMPLAZA CON ESTE NUEVO BLOQUE 👇
+const handleSelect = (e) => {
+  e.preventDefault();
+  e.stopPropagation(); 
+  selectCity(city.id);
+};
+
+// Funciona en computadoras
+grp.addEventListener('click', handleSelect);
+// Funciona en celulares y tablets
+grp.addEventListener('touchend', handleSelect);
     
     g.appendChild(grp);
   });
@@ -475,7 +482,7 @@ function adjustElements() {
     const label = grp.querySelector('text');
     const isActive = activeCity === city.id;
     
-    const baseRadius = isActive ? 9 : 6;
+    const baseRadius = isActive ? 12 : 6;
     const baseStroke = isActive ? 2.5 : 1.5;
     let customSize = city.fontSize || 11;
     const baseFontSize = isActive ? customSize + 2 : customSize;
@@ -609,7 +616,7 @@ window.onload = function() {
     zoomEnabled: true,
     dblClickZoomEnabled: true,
     mouseWheelZoomEnabled: true,
-    preventMouseEventsDefault: true,
+    preventMouseEventsDefault: false,
     zoomScaleSensitivity: 0.25,
     minZoom: 1,
     maxZoom: 8,
